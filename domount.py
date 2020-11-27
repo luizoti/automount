@@ -7,7 +7,6 @@ from os.path import join, realpath
 #
 METHOD = {
     "fs": "org.freedesktop.UDisks2.Filesystem",
-    "pt": "org.freedesktop.UDisks2.PartitionTable",
     "canpoweroff": "org.freedesktop.UDisks2.Drive.CanPowerOff",
     "poweroff": "org.freedesktop.UDisks2.Drive.PowerOff",
     "ejectable": "org.freedesktop.UDisks2.Drive.Ejectable",
