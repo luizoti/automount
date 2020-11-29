@@ -3,37 +3,46 @@
 import re
 import os
 import dbus
-from os.path import join, realpath
+from os.path import join, realpath, basename
 #
-METHOD = {
+INTERFACES = {
     "fs": "org.freedesktop.UDisks2.Filesystem",
-    "canpoweroff": "org.freedesktop.UDisks2.Drive.CanPowerOff",
-    "poweroff": "org.freedesktop.UDisks2.Drive.PowerOff",
-    "ejectable": "org.freedesktop.UDisks2.Drive.Ejectable",
-    "eject": "org.freedesktop.UDisks2.Drive.Eject",
+    "dr": "org.freedesktop.UDisks2.Drive",
+    "pp": "org.freedesktop.DBus.Properties",
+    "pt": "org.freedesktop.UDisks2.PartitionTable",
 }
 
 PATHS = {
-    "drives": "/org/freedesktop/UDisks2/drives",
+    "drives": "/org/freedesktop/UDisks2/drives/",
     "block_devices": "/org/freedesktop/UDisks2/block_devices/",
 }
 
 class UDisksBus():
-    def init(self, DEV, method):
-        if method in ['fs', 'pt']:
-            path = PATHS['block_devices']
-        elif method in ['canpoweroff', 'poweroff', 'ejectable', 'eject']:
-            path = PATHS['drives']
+    def __init__(self):
+        self.bus = dbus.SystemBus()
+
+    def SetDevice(self, path, dev_device):
+        return self.bus.get_object('org.freedesktop.UDisks2', ''.join([path, dev_device]))
+
+    def SetInterface(self, device, dbus_iface):
+        return dbus.Interface(device, dbus_interface=dbus_iface)
+
+    def getProperties(self, dev_device, path, interface, propkey=None):
+        if path == "drives":
+            dev_name = self.getDeviceName(dev_device)
+        elif path == "block_devices":
+            dev_name = dev_device
             pass
 
-        bus = dbus.SystemBus()
-        OBJ = bus.get_object('org.freedesktop.UDisks2', ''.join([path, DEV]))
+        device = self.SetDevice(PATHS[path], dev_name)
+        iface = self.SetInterface(device, INTERFACES['pp'])
+        props = iface.GetAll(INTERFACES[interface])
 
-        try:
-            return dbus.Interface(OBJ, dbus_interface=METHOD[method])
-        except Exception as e:
-            raise e
+        if propkey != None:
+            return props[propkey]
+            pass
 
+        return props
 
     def devExists(self, devpath):
         try:
@@ -42,62 +51,63 @@ class UDisksBus():
             return False
         return True
 
-    def getDevicePath(self, device):
+    def getDeviceName(self, device):
         DISKS_PATH = "/dev/disk/by-id/"
 
         for devicename in os.listdir(DISKS_PATH):
             devicepath = join(DISKS_PATH, devicename)
             if device in realpath(devicepath):
-                print(device)
-                print(re.sub(r'(usb|ata|wwn)\-', '', re.sub(r'\-([a-z].*|[0,99]\:.+?)', '', devicename)))
-                pass
-            pass
-
+                return re.sub(r'(usb|ata|wwn)\-', '', re.sub(r'\-([a-z].*|[0,99]\:.+?)', '', devicename))
 
     def partitionTableChecker(self, deviceslist):
-        devs = []
-
         for device in deviceslist:
-            status = False
-            if device[-1].isdigit():
-                devs.append(device)
-            else:
-                for x in range(1,11):
-                    devpath = ''.join(["/dev/", device, str(x)])
+            try:
+                prop = self.getProperties(device, "block_devices", "pt", "Partitions")
+            except dbus.exceptions.DBusException as e:
+                if 'No such interface “org.freedesktop.UDisks2.PartitionTable”' in str(e):
+                    yield basename(device)
+                    pass
 
-                    if self.devExists(devpath) == True:
-                        devs.append(os.path.basename(devpath))
-                        status = True
+            for ptb in prop:
+                yield basename(ptb)
 
-                    if x == 10 and status == False:
-                        devs.append(device)
-                        status = False
-                        x = 0
-        return devs
+    def checkCanPowerOff(self, dev_device):
+        prop = self.getProperties(dev_device, "drives", "dr", "CanPowerOff")
 
+        if prop == 0:
+            return False
+        elif prop == 1:
+            return True
+            pass
+    # 
+    def mount(self, dev_device):
+        if type(dev_device) == str:
+            _devs = [dev_device]
+        else:
+            _devs = dev_device
+            pass
 
-    def mount(self, devices):
-        for device in self.partitionTableChecker(devices):
-            init = self.init(device, 'fs')
-            domount = init.get_dbus_method('Mount')
+        for dev in self.partitionTableChecker(_devs):
+            device = self.SetDevice(PATHS['block_devices'], dev)
+            iface = self.SetInterface(device, INTERFACES['fs'])
+            domount = iface.get_dbus_method('Mount')
 
             try:
                 target = domount({'s': 'a'})
 
                 if os.path.ismount(target):
-                    yield 'mounted', device, target
+                    yield 'mounted', dev, target
             except Exception as e:
                 expt = str(e)
 
                 if "AlreadyMounted" in expt:
-                    yield 'already', device, re.findall(r"\`(.+?)\'", str(expt))[0]
+                    yield 'already', dev, re.findall(r"\`(.+?)\'", str(expt))[0]
 
-
-    def umount(self, DEV):
-        if type(DEV) == str:
-            _devs = [DEV]
+    def umount(self, dev_device):
+        if type(dev_device) == str:
+            _devs = [dev_device]
         else:
-            _devs = DEV
+            _devs = dev_device
             pass
 
         for device in self.partitionTableChecker(_devs):
@@ -111,11 +121,9 @@ class UDisksBus():
                 if "AlreadyMounted" in expt:
                     yield '', device, re.findall(r"\`(.+?)\'", mntOut)[0]
                     pass
-                
 
-
-    def repair(self, DEV):
-        for device in self.partitionTableChecker(DEV):
+    def repair(self, dev_device):
+        for device in self.partitionTableChecker(dev_device):
             self._umount() # You need to unmount before repairing the disc.
 
             init = self.init(device, 'fs')
@@ -126,17 +134,18 @@ class UDisksBus():
             except Exception as e:
                 print(e)
 
+    def resize(self, dev_device):
+        return self.init(dev_device, 'fs').get_dbus_method('Resize')({'s': 'a'})
 
-    # def resize(self, DEV):
-    #     return self.init(DEV, 'fs').get_dbus_method('Resize')({'s': 'a'})
+    def setlabel(self, dev_device):
+        return self.init(dev_device, 'fs').get_dbus_method('SetLabel')('NEEWW')
 
-    # def setlabel(self, DEV):
-    #     return self.init(DEV, 'fs').get_dbus_method('SetLabel')('NEEWW')
+    def ownership(self, dev_device):
+        try:
+            return self.init(dev_device, 'fs').get_dbus_method('TakeOwnership')({'s': 'a'})
+        except Exception as e:
+            print(e)
 
-    # def ownership(self, DEV):
-    #     try:
-    #         return self.init(DEV, 'fs').get_dbus_method('TakeOwnership')({'s': 'a'})
-    #     except Exception as e:
-    #         print(e)
-
-UDisksBus().getDevicePath("sdc")
+# for x in UDisksBus().partitionTableChecker("sdb"):
+#     print(x)
+#     pass
