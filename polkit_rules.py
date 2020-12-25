@@ -46,7 +46,7 @@ for item in POLKIT_DICT:
 
     try:
         _PATH = returnrulepath(action)
-        
+
         TEMPLATE = [f"[{desc}]\n", f"Identity=unix-group:{user}\n", f"Action={action}\n", f"ResultAny={_bool}\n"]
         new_pklt = open(_PATH, "w")
         print("Regra instalada:", _PATH)
@@ -55,5 +55,3 @@ for item in POLKIT_DICT:
     except Exception as e:
         raise e
     pass
-
-# print(''.join(TEMPLATE))
