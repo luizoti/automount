@@ -1,6 +1,0 @@
-{
-    "board": "arduino:avr:leonardo",
-    "port": "/dev/ttyACM0",
-    "sketch": "mult_presstimedetection.ino",
-    "programmer": "Atmel-ICE (AVR)"
-}
