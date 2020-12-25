@@ -8,6 +8,10 @@ echo "USER    : ${USER}"
 echo "DEST_DIR: ${DEST_DIR}"
 echo 
 
+function _gc () {
+    sudo -u ${USER} git clone "https://github.com/luizoti/automount.git" "${DEST_DIR}"
+}
+
 function CLONE () {
     if sudo apt-get install udisks2; then
         echo 
@@ -18,10 +22,12 @@ function CLONE () {
 
     if [[ ! -d "${DEST_DIR}" ]]; then
         echo "DEST_DIR:" "${DEST_DIR}"
-        sudo -u ${USER} git clone "https://github.com/luizoti/automount.git" "${DEST_DIR}"
+        _gc
+        echo "${DEST_DIR}, clonado /tmp/"
     else
-        cd "${DEST_DIR}"
-        git pull
+        sudo rm -rf "${DEST_DIR}"
+        echo "${DEST_DIR}, deletado"
+        _gc
     fi
 }
 
