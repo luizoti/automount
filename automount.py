@@ -12,8 +12,8 @@ from dbus_notify import *
 parse = argparse.ArgumentParser(description='AutoMount devices with udev')
 parse.add_argument('-m', nargs='+', metavar='sda sdb2 sdc', help='Mount devices')
 parse.add_argument('-u', nargs='+', metavar='sda sdb2 sdc', help='Umount devices')
-parse.add_argument('-nu', action='store_true', help='Umount - notify only use with udev')
-parse.add_argument('-nd', action='store_true', help='Disconect - notify only use with udev')
+parse.add_argument('-nu', metavar='sdX', help='Umount - notify only use with udev')
+parse.add_argument('-nd', metavar='sdX', help='Disconect - notify only use with udev')
 parse.add_argument('-s', help='Show devices', action='store_true')
 args = parse.parse_args()
 
@@ -54,6 +54,10 @@ class AutoMount():
             messege = ' '.join([messege[1], "já montado em", messege[2]])
         elif "mounted" in messege:
             messege = ' '.join([messege[1], "foi montado em", messege[2]])
+        elif "umount" in messege:
+            messege = ' '.join([messege[1], "foi desmontado"])
+        elif "disconect" in messege:
+            messege = ' '.join([messege[1], "foi desconectado"])
             pass
 
         actions = ''
@@ -86,11 +90,15 @@ if __name__ == '__main__':
         except Exception as e:
             raise e
 
-
-    if notify_umount == True:
-        print("notify_umount")
-    elif notify_disconect == True:
-        print("notify_disconect")
+    try:
+        if notify_umount:
+            print("notify_umount")
+            am.notify(['umount', notify_umount])
+        elif notify_disconect:
+            print("notify_disconect")
+            am.notify(['disconect', notify_disconect])
+            pass
+    except:
         pass
 
     if show is True:
