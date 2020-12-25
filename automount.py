@@ -47,7 +47,7 @@ class AutoMount():
     def notify(self, messege):          
         appname = "AutoMount"
         _id     = randrange(999)
-        icon    = join(dirname(__file__), "drive-removable-media-usb-pendrive.svg")
+        icon    = join(dirname(__file__), "media", "drive-removable-media-usb-pendrive.svg")
         summary = ''.join(['/dev/', messege[1]])
 
         if "already" in messege:

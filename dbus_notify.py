@@ -5,7 +5,7 @@ from random import randrange
 from dbus.mainloop.glib import DBusGMainLoop
 
 _id = randrange(999)
-actions = ''
+NotifyActions = ''
 hints = ''
 
 class NotifyAction(object):
@@ -17,7 +17,7 @@ class NotifyAction(object):
 
 
     def create(self, appname, _id, icon, summary, messege, actions, hints, timeout):
-        print(appname, _id, icon, summary, messege, actions, hints, timeout)
+        # print(appname, _id, icon, summary, messege, actions, hints, timeout)
         dbus.Interface(self.obj,
             'org.freedesktop.Notifications').Notify(appname,
                                                     _id,
