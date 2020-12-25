@@ -1,1 +1,1 @@
-# AutoMount - Auto mount usb devices with Udisk2
+# AutoMount - Mount usb devices with Udisk2
