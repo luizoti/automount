@@ -3,11 +3,11 @@ Description=AutoMount: %i.
 
 [Service]
 Type=simple
-User=luiz
-Environment=XAUTHORITY=/home/luiz/.Xauthority
+User=USER
+Environment=XAUTHORITY=/home/USER/.Xauthority
 Environment=DISPLAY=:0
 Environment=DBUS_SESSION_BUS_ADDRESS=unix:path=/run/user/1000/bus
-ExecStart=/usr/bin/python3 /home/luiz/automount/automount.py -nd %i
+ExecStart=/usr/bin/python3 /home/USER/.config/automount/automount.py -nd %i
 
 [Install]
 WantedBy=multi-user.target
