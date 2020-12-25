@@ -74,23 +74,15 @@ if __name__ == '__main__':
 
     mount = args.m
     umount = args.u
-    show = args.s
     notify_umount = args.nu
     notify_disconect = args.nd
 
-    if not mount == None:
-        try:
-            am.mount(mount)
-        except Exception as e:
-            raise e
-    elif not umount == None:
-        try:
-            am.umount(mount)
-        except Exception as e:
-            raise e
-
     try:
-        if notify_umount:
+        if mount:
+            am.mount(mount)
+        elif umount:
+            am.umount(mount)
+        elif notify_umount:
             print("notify_umount")
             am.notify(['umount', notify_umount])
         elif notify_disconect:
