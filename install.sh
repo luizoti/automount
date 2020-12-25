@@ -19,6 +19,9 @@ function CLONE () {
     if [[ ! -d "${DEST_DIR}" ]]; then
         echo "DEST_DIR:" "${DEST_DIR}"
         sudo -u ${USER} git clone "https://github.com/luizoti/automount.git" "${DEST_DIR}"
+    else
+        cd "${DEST_DIR}"
+        git pull
     fi
 }
 
@@ -35,6 +38,10 @@ function COPYSERVICES () {
 
         if cp -rf "${DESTINY_SERV}" "${DEST_SERV}"; then
             echo "Serviço copiado com ${DEST_SERV}"
+
+            CMDOLD=USER
+            CMDNEW=${USER}
+            sed -i "s/$CMDOLD/$CMDNEW/g" "${DEST_SERV}"
         fi
     done
     sudo systemctl daemon-reload
@@ -54,17 +61,17 @@ function UDEV () {
 ACTION=="add", \
     SUBSYSTEM=="block", \
         KERNEL=="[sh]d[a-z]|mmcblk[0-9]", \
-            RUN+="/usr/bin/sudo /bin/systemctl start --no-block automont_mount@.service"
+            RUN+="/usr/bin/sudo /bin/systemctl start --no-block automont_mount@%k.service"
 
 ACTION=="change", \
     SUBSYSTEM=="block", \
         KERNEL=="[sh]d[a-z]|mmcblk[0-9]", \
-            RUN+="/usr/bin/sudo /bin/systemctl start --no-block automont_umount@.service"
+            RUN+="/usr/bin/sudo /bin/systemctl start --no-block automont_umount@%k.service"
 
 ACTION=="remove", \
     SUBSYSTEM=="block", \
         KERNEL=="[sh]d[a-z]|mmcblk[0-9]", \
-            RUN+="/usr/bin/sudo /bin/systemctl start --no-block automont_disconect@.service"' > ${LIB_ZZ}
+            RUN+="/usr/bin/sudo /bin/systemctl start --no-block automont_disconect@%k.service"' > ${LIB_ZZ}
     # 
     echo
     echo ${LIB_ZZ}
