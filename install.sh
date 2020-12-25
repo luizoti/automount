@@ -1,11 +1,13 @@
 #!/usr/bin/bash
 
 USER=$(id -nu 1000)
+WORKDIR="$(cd $(dirname ${BASH_SOURCE[0]}) && pwd)"
 DEST_DIR="/home/${USER}/.config/automount"
 DEST="/etc/systemd/system"
 
 echo "USER    : ${USER}"
 echo "DEST_DIR: ${DEST_DIR}"
+echo "WORKDIR : ${WORKDIR}"
 echo 
 
 function _gc () {
@@ -44,7 +46,7 @@ function COPYSERVICES () {
 
         if cp -rf "${DESTINY_SERV}" "${DEST_SERV}"; then
             echo "Serviço copiado com ${DEST_SERV}"
-
+            echo
             CMDOLD=USER
             CMDNEW=${USER}
             sed -i "s/$CMDOLD/$CMDNEW/g" "${DEST_SERV}"
@@ -86,8 +88,17 @@ ACTION=="remove", \
     sudo udevadm control --reload-rules
 }
 
+function POLKITRULES() {
+    echo "instalando polkit-rules"
+    if /usr/bin/python3 "${WORKDIR}/polkit_rules.py"; then
+        echo
+        echo "Sem erros ao instalar regras"
+    fi
+}
+
 CLONE
 COPYSERVICES
 UDEV
+POLKITRULES
 
 exit
