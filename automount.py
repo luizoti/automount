@@ -14,7 +14,6 @@ parse.add_argument('-m', nargs='+', metavar='sda sdb2 sdc', help='Mount devices'
 parse.add_argument('-u', nargs='+', metavar='sda sdb2 sdc', help='Umount devices')
 parse.add_argument('-nu', metavar='sdX', help='Umount - notify only use with udev')
 parse.add_argument('-nd', metavar='sdX', help='Disconect - notify only use with udev')
-parse.add_argument('-s', help='Show devices', action='store_true')
 args = parse.parse_args()
 
 
@@ -99,8 +98,4 @@ if __name__ == '__main__':
             am.notify(['disconect', notify_disconect])
             pass
     except:
-        pass
-
-    if show is True:
-        print("devss")
         pass
