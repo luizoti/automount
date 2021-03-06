@@ -1,4 +1,4 @@
-#!/usr/bin/bash
+#!/bin/bash
 
 USER=$(id -nu 1000)
 WORKDIR="$(cd $(dirname ${BASH_SOURCE[0]}) && pwd)"
@@ -25,6 +25,7 @@ function CLONE () {
     if [[ ! -d "${DEST_DIR}" ]]; then
         echo "DEST_DIR:" "${DEST_DIR}"
         _gc
+        echo
         echo "${DEST_DIR}, clonado /tmp/"
     else
         sudo rm -rf "${DEST_DIR}"
@@ -40,6 +41,7 @@ function COPYSERVICES () {
             "2:automont_umount@.service"
             )
     
+    echo
     for SERV in "${SERVICES[@]}"; do
         DESTINY_SERV=${DEST_DIR}/${SERV##*:}
         DEST_SERV=${DEST}/${SERV##*:}
